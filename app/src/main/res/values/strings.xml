@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Health Data Aggregator</string>
+    <string name="action_settings">Settings</string>
+    <string name="select_sources_header">Select data source(s)</string>
+    <string name="source_logo">Source Logo</string>
+    <string name="googlefit">GoogleFit</string>
+    <string name="fitbit">FitBit</string>
+    <string name="ihealth">iHealth</string>
+    <string name="add_sources_title">Add Data Source(s)</string>
+    <string name="connect">CONNECT</string>
+    <string name="disconnect">DISCONNECT</string>
+
+
+    <string name="fitbit_welcome">Welcome!</string>
+    <string name="login_with_fitbit">Login with Fitbit</string>
+    <string name="fitbit_logo_description">Fitbit Logo</string>
+    <string name="login_title">Login</string>
+    <string name="missing_scopes_error">Error logging in. Missing the following required scopes: </string>
+    <string name="fitbit_login_dismissed">Login dismissed or no scopes selected</string>
+    <string name="error_loading_devices_format">Error loading devices: %s</string>
+    <string name="error_loading_activities_format">Error loading user activities: %s</string>
+    <string name="error_loading_user_format">Error loading user: %s</string>
+    <string name="scopes_missing_format">`%s` scope(s) required to function correctly.</string>
+    <string name="activity_info">Activity</string>
+    <string name="no_data">No data</string>
+    <string name="loading">Loading…</string>
+    <string name="error_loading_data">Error loading data. Check your internet connection and try
+        again later.
+    </string>
+
+</resources>
