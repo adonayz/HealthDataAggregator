@@ -4,11 +4,20 @@ package edu.wpi.healthdataaggregator;
  * Created by Adonay on 7/19/2017.
  */
 
+/**
+ *
+ */
 public enum SourceType {
     GOOGLEFIT,
     FITBIT,
-    IHEALTH;
+    IHEALTH,
+    JAWBONE,
+    WITHINGS;
 
+    /**
+     *
+     * @return
+     */
     String getName() {
         switch(this){
             case GOOGLEFIT:
@@ -17,11 +26,19 @@ public enum SourceType {
                 return "FitBit";
             case IHEALTH:
                 return "iHealth";
+            case JAWBONE:
+                return "JawBone";
+            case WITHINGS:
+                return "Withings";
             default:
                 return "Unknown Source";
         }
     }
 
+    /**
+     *
+     * @return
+     */
     int getSourceID() {
         switch(this){
             case GOOGLEFIT:
@@ -30,11 +47,19 @@ public enum SourceType {
                 return 2;
             case IHEALTH:
                 return 3;
+            case JAWBONE:
+                return 4;
+            case WITHINGS:
+                return 5;
             default:
                 return 0;
         }
     }
 
+    /**
+     *
+     * @return
+     */
     String getMessage(){
         switch(this){
             case GOOGLEFIT:
@@ -43,11 +68,19 @@ public enum SourceType {
                 return "FitBit collects ur stuff";
             case IHEALTH:
                 return "iHealth make that and that that";
+            case JAWBONE:
+                return "Jawbone is the shiiiiiii";
+            case WITHINGS:
+                return "WITHINGS IS KUNINI";
             default:
                 return "This thing came from nowhere";
         }
     }
 
+    /**
+     *
+     * @return
+     */
     String getTAG(){
         switch(this){
             case GOOGLEFIT:
@@ -56,6 +89,10 @@ public enum SourceType {
                 return "FitBitConnector";
             case IHEALTH:
                 return "IHealthConnector";
+            case JAWBONE:
+                return "JawboneConnector";
+            case WITHINGS:
+                return "WithingsConnector";
             default:
                 return "UnknownClass";
         }

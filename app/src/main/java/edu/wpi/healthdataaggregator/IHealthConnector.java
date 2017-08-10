@@ -1,7 +1,9 @@
 package edu.wpi.healthdataaggregator;
 
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 /**
  * Created by Adonay on 7/19/2017.
@@ -9,8 +11,8 @@ import android.widget.RelativeLayout;
 
 public class IHealthConnector extends Connector {
 
-    public IHealthConnector(AddSourcesActivity addSourcesActivity, RelativeLayout progressBarLayout){
-        super(SourceType.IHEALTH, addSourcesActivity, progressBarLayout);
+    public IHealthConnector(AppCompatActivity activity, RelativeLayout progressBarLayout){
+        super(SourceType.IHEALTH, activity, progressBarLayout);
 }
 
     @Override
@@ -27,8 +29,8 @@ public class IHealthConnector extends Connector {
     }
 
     @Override
-    public void loadHealthData() {
-
+    public void loadHealthData(TextView textView) {
+        this.setHealthData("TEST");
     }
 
 }

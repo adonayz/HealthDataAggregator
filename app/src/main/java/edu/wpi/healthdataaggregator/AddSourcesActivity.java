@@ -1,9 +1,6 @@
 package edu.wpi.healthdataaggregator;
 
 import android.content.Intent;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
@@ -13,36 +10,31 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 
 import com.fitbit.authentication.AuthenticationManager;
+import com.jawbone.upplatformsdk.api.ApiManager;
+import com.jawbone.upplatformsdk.utils.UpPlatformSdkConstants;
 
 import java.util.LinkedList;
 
-import static android.view.View.LAYER_TYPE_HARDWARE;
-import static android.view.View.LAYER_TYPE_NONE;
 import static edu.wpi.healthdataaggregator.GoogleFitConnector.checkGoogleFitPermissions;
 import static edu.wpi.healthdataaggregator.GoogleFitConnector.requestGoogeFitPermisions;
 import static edu.wpi.healthdataaggregator.SourceType.FITBIT;
-import static edu.wpi.healthdataaggregator.SourceType.GOOGLEFIT;
-import static edu.wpi.healthdataaggregator.SourceType.IHEALTH;
+import static edu.wpi.healthdataaggregator.SourceType.JAWBONE;
 
 public class AddSourcesActivity extends AppCompatActivity{
 
-    private static final String TAG = "AddSourcesActivity";
-    private static final int GOOGLEFIT_ID = 1;
-    private static final int FITBIT_ID = 2;
-    private static final int IHEALTH_ID = 3;
     private static final int ADAPTER_MODE = 2;
 
     private ListView dataSourceList;
     private SourceBaseAdapter adapter;
     private LinkedList<Connector> sources;
-    private static int isConnectingSource = 0;
+    private static SourceType isConnectingSource = null;
     private RelativeLayout addingProgressBarLayout;
-    private GoogleFitConnector googleFitConnector = null;
-    private FitBitConnector fitBitConnector = null;
-    private IHealthConnector iHealthConnector = null;
-    private PreferencesManager preferencesManager;
     private WebView loginWebview;
 
+    /**
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,18 +45,7 @@ public class AddSourcesActivity extends AppCompatActivity{
         addingProgressBarLayout = (RelativeLayout) findViewById(R.id.addingProgressBarLayout);
         loginWebview = (WebView) findViewById(R.id.invisibleWebView);
 
-        preferencesManager = new PreferencesManager();
-
-        googleFitConnector = new GoogleFitConnector(this, addingProgressBarLayout);
-        fitBitConnector = new FitBitConnector(this, addingProgressBarLayout);
-        iHealthConnector = new IHealthConnector(this, addingProgressBarLayout);
-
         sources = new LinkedList<>();
-
-        sources.add(googleFitConnector);
-        sources.add(fitBitConnector);
-        sources.add(iHealthConnector);
-
         loadSources();
         saveSources();
 
@@ -75,137 +56,125 @@ public class AddSourcesActivity extends AppCompatActivity{
         dataSourceList.setAdapter(adapter);
     }
 
+    /**
+     *
+     * @param v
+     * @param position
+     * @param connector
+     */
     public void chooseSource(View v, int position, Connector connector){
-        isConnectingSource = position+1;
+        isConnectingSource =connector.getSourceType();
         addingProgressBarLayout.setVisibility(View.VISIBLE);
         if(!connector.isConnected()){
             switch (isConnectingSource){
-                case GOOGLEFIT_ID:
+                case GOOGLEFIT:
                     if(!checkGoogleFitPermissions(this)) {
                         requestGoogeFitPermisions(this);
                     }
-                    googleFitConnector.connect();
+                    connector.connect();
                     break;
-                case FITBIT_ID:
-                    fitBitConnector.connect();
-                    break;
-                case IHEALTH_ID:
-                    iHealthConnector.connect();
+                default:
+                    connector.connect();
                     break;
             }
 
         }else{
-            switch (isConnectingSource){
-                case GOOGLEFIT_ID:
-                    googleFitConnector.disconnect();
-                    break;
-                case FITBIT_ID:
-                    fitBitConnector.disconnect();
-                    break;
-                case IHEALTH_ID:
-                    iHealthConnector.disconnect();
-                    break;
-            }
+            connector.disconnect();
         }
 
-        Connector Connector = sources.get(position);
-        sources.remove(position);
-        sources.add(position, Connector);
-
-        adapter.notifyDataSetChanged(ADAPTER_MODE);
-        saveSources();
+        updateSourceListItem(connector);
     }
 
     public boolean onOptionsItemSelected(MenuItem item){
         onBackPressed();
-        finish();
         return true;
 
     }
 
-    // Code from http://blog.bradcampbell.nz/greyscale-views-on-android/
-    public void setGreyscale(View v, boolean greyscale) {
-        if (greyscale) {
-            // Create a paint object with 0 saturation (black and white)
-            ColorMatrix cm = new ColorMatrix();
-            cm.setSaturation(0);
-            Paint greyscalePaint = new Paint();
-            greyscalePaint.setColorFilter(new ColorMatrixColorFilter(cm));
-            // Create a hardware layer with the greyscale paint
-            v.setLayerType(LAYER_TYPE_HARDWARE, greyscalePaint);
-        } else {
-            // Remove the hardware layer
-            v.setLayerType(LAYER_TYPE_NONE, null);
-        }
+    /**
+     *
+     */
+    @Override
+    public void onBackPressed(){
+        saveSources();
+        super.onBackPressed();
+        this.finish();
     }
 
+    /**
+     *
+     */
     @Override
     protected void onResume(){
         super.onResume();
 
         addingProgressBarLayout.setVisibility(View.GONE);
 
-        if(isConnectingSource == GOOGLEFIT.getSourceID()){
-
-        }else if(isConnectingSource == FITBIT.getSourceID()){
-            if (AuthenticationManager.isLoggedIn()) {
-                fitBitConnector.onFitBitLoggedIn();
+        if(isConnectingSource != null){
+            switch (isConnectingSource){
+                case FITBIT:
+                    if (AuthenticationManager.isLoggedIn()) {
+                        FitBitConnector fitBitConnector = (FitBitConnector) getSource(FITBIT);
+                        fitBitConnector.onFitBitLoggedIn();
+                        updateSourceListItem(fitBitConnector);
+                    }
             }
-        }else if(isConnectingSource == IHEALTH.getSourceID()){
-
+            isConnectingSource = null;
         }
-        isConnectingSource = 0;
 
-        loadSources();
-
-        adapter.notifyDataSetChanged(ADAPTER_MODE);
+        saveSources();
     }
 
-    public void saveSources(){
+    /**
+     *
+     */
+    private void saveSources(){
         for(Connector connector: sources){
-            if(connector.getSourceName().equals(GOOGLEFIT.getName())){
-                preferencesManager.setGoogleFitConnected(this, connector.isConnected());
-            }else if(connector.getSourceName().equals(FITBIT.getName())){
-                preferencesManager.setFitBitConnected(this, connector.isConnected());
-            }else if(connector.getSourceName().equals(IHEALTH.getName())){
-                preferencesManager.setIHealthConnected(this, connector.isConnected());
-            }
+            PreferencesManager.connectSource(this, connector.getSourceType(), connector.isConnected());
         }
     }
 
-    public void loadSources(){
-        if(preferencesManager.isGoogleFitConnected(this)){
-            if(MainActivity.getSource(GOOGLEFIT.getName()) != null){
-                googleFitConnector = (GoogleFitConnector) MainActivity.getSource(GOOGLEFIT.getName());
-                sources.remove(0);
-                sources.add(0, googleFitConnector);
+    /**
+     *
+     */
+    private void loadSources(){
+        sources.clear();
+        for(SourceType sourceType: SourceType.values()){
+            Connector connector;
+            if((PreferencesManager.isSourceConnected(this, sourceType)) && (MainActivity.getSource(sourceType) != null)){
+                connector = MainActivity.getSource(sourceType);
+            }else{
+                connector = Connector.createConnector(sourceType, this, addingProgressBarLayout);
             }
-        }
-        if(preferencesManager.isFitBitConnected(this)){
-            if(MainActivity.getSource(FITBIT.getName()) != null){
-                fitBitConnector = (FitBitConnector) MainActivity.getSource(FITBIT.getName());
-                sources.remove(1);
-                sources.add(1, fitBitConnector);
-            }
-        }
-        if(preferencesManager.isIHealthConnected(this)){
-
+            sources.add(connector);
         }
     }
 
+    /**
+     *
+     */
     @Override
     protected void onPause(){
         super.onPause();
         saveSources();
     }
 
+    /**
+     *
+     */
     @Override
     protected void onStop(){
         super.onStop();
-        isConnectingSource = 0;
+        isConnectingSource = null;
         saveSources();
     }
 
+    /**
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -222,11 +191,66 @@ public class AddSourcesActivity extends AppCompatActivity{
          *
          */
 
-        if(isConnectingSource == FITBIT.getSourceID()){
+        if(isConnectingSource == FITBIT){
+            FitBitConnector fitBitConnector = (FitBitConnector) getSource(FITBIT);
             if (!AuthenticationManager.onActivityResult(requestCode, resultCode, data, fitBitConnector)) {
-                // Handle other activity results, if needed
+                fitBitConnector.setConnected(false);
+            }
+
+            updateSourceListItem(fitBitConnector);
+        }
+
+        if(isConnectingSource == JAWBONE){
+
+            JawboneConnector jawboneConnector = (JawboneConnector) getSource(JAWBONE);
+
+            updateSourceListItem(jawboneConnector);
+
+            if(resultCode == RESULT_OK) {
+                if (requestCode == JawboneConnector.getOauthRequestCode()) {
+                    String code = data.getStringExtra(UpPlatformSdkConstants.ACCESS_CODE);
+                    if (code != null) {
+                        //first clear older accessToken, if it exists..
+                        ApiManager.getRequestInterceptor().clearAccessToken();
+
+                        ApiManager.getRestApiInterface().getAccessToken(
+                                JawboneConnector.getClientId(),
+                                JawboneConnector.getClientSecret(),
+                                code,
+                                jawboneConnector.getAccessTokenRequestListener());
+                    }
+                }
             }
         }
 
+    }
+
+    /**
+     *
+     * @param sourceType
+     * @return
+     */
+    private Connector getSource(SourceType sourceType){
+        for(Connector connector: sources){
+            if(connector.getSourceType() == sourceType){
+                return connector;
+            }
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param connector
+     */
+    private void updateSourceListItem(Connector connector){
+        for(int i = 0; i < sources.size(); i++){
+            if(sources.get(i).getSourceType() == connector.getSourceType()){
+                sources.remove(i);
+                sources.add(i, connector);
+            }
+        }
+        adapter.notifyDataSetChanged();
+        saveSources();
     }
 }

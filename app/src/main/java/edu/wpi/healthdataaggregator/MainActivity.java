@@ -21,9 +21,7 @@ import com.fitbit.authentication.AuthenticationResult;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import static edu.wpi.healthdataaggregator.SourceType.FITBIT;
-import static edu.wpi.healthdataaggregator.SourceType.GOOGLEFIT;
-import static edu.wpi.healthdataaggregator.SourceType.IHEALTH;
+import it.sephiroth.android.library.tooltip.Tooltip;
 
 public class MainActivity extends AppCompatActivity implements View.OnLongClickListener, AuthenticationHandler, SwipeRefreshLayout.OnRefreshListener {
 
@@ -41,19 +39,16 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     private RelativeLayout progressBarRelativeLayout;
     private SwipeRefreshLayout mainSwipeRefreshLayout;
 
-    private PreferencesManager preferencesManager;
-
-    private GoogleFitConnector googleFitConnector = null;
-    private FitBitConnector fitBitConnector = null;
-    private IHealthConnector iHealthConnector = null;
-
+    /**
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        preferencesManager = new PreferencesManager();
 
         chooseTextView = (TextView) findViewById(R.id.select_source_text_view) ;
         loginWebview = (WebView) findViewById(R.id.invisibleWebView);
@@ -62,8 +57,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
 
         sources = new LinkedList<>();
         selectedSources = new ArrayList<Connector>();
-
-        loadSources();
 
         mainSwipeRefreshLayout.setOnRefreshListener(this);
        // mainSwipeRefreshLayout.setVisibility(View.GONE);
@@ -78,41 +71,66 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         dataSourceList.setAdapter(adapter);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent addSourceIntent = new Intent(MainActivity.this, AddSourcesActivity.class);
                 startActivity(addSourceIntent);
+
             }
         });
+
+        if(PreferencesManager.isFirstTime(this)){
+            PreferencesManager.setToFirstTime(this);
+        }
+
+        if(sources.isEmpty()){
+            createToolTip(fab);
+        }
     }
 
+    /**
+     *
+     */
     @Override
     public void onStart(){
         super.onStart();
-
         refreshSourceReadings();
     }
 
+    /**
+     *
+     */
     @Override
     public void onResume(){
         super.onResume();
-        loadSources();
         refreshSourceReadings();
     }
 
+    /**
+     *
+     */
     @Override
     public void onPause(){
         super.onPause();
         saveSources();
     }
 
+    /**
+     *
+     */
     @Override
     public void onStop(){
         super.onStop();
         saveSources();
     }
 
+    /**
+     *
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -120,6 +138,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         return true;
     }
 
+    /**
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -146,6 +169,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     *
+     * @param v
+     * @return
+     */
     @Override
     public boolean onLongClick(View v) {
         chooseTextView.setText(R.string.select_sources_header);
@@ -158,6 +186,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         return true;
     }
 
+    /**
+     *
+     * @param checkBox
+     * @param position
+     */
     public void prepareSelection(CheckBox checkBox, int position){
 
         if(checkBox.isChecked()){
@@ -171,6 +204,10 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         }
     }
 
+    /**
+     *
+     * @param count
+     */
     public void updateTitle(int count){
         if (count == 0){
             chooseTextView.setText("0 data sources selected");
@@ -180,65 +217,129 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public static boolean isInSelectionMode() {
         return isInSelectionMode;
     }
 
-
+    /**
+     *
+     * @param result
+     */
     @Override
     public void onAuthFinished(AuthenticationResult result) {
 
 
     }
 
+    /**
+     *
+     */
     public void loadSources(){
-        if(preferencesManager.isGoogleFitConnected(this) && (getSource(GOOGLEFIT.getName()) == null)){
-            googleFitConnector = new GoogleFitConnector(this, progressBarRelativeLayout);
-            googleFitConnector.connect();
-            sources.add(googleFitConnector);
+        sources.clear();
+        for(SourceType sourceType: SourceType.values()){
+            if(PreferencesManager.isSourceConnected(this, sourceType)){
+                Connector connector = Connector.createConnector(sourceType, this, progressBarRelativeLayout);
+                if(!connector.isConnected()){
+                    connector.connect();
+                }
+                sources.add(connector);
+            }
         }
-        if(preferencesManager.isFitBitConnected(this) && (getSource(FITBIT.getName()) == null)){
-            fitBitConnector = new FitBitConnector(this, progressBarRelativeLayout);
-            fitBitConnector.connect();
-            sources.add(fitBitConnector);
-        }
-        if(preferencesManager.isIHealthConnected(this) && (getSource(IHEALTH.getName()) == null)){
-
-        }
+        adapter.notifyDataSetChanged();
     }
 
-    public static Connector getSource(String name){
+    /**
+     *
+     * @param sourceType
+     * @return
+     */
+    public static Connector getSource(SourceType sourceType){
         for(Connector connector: sources){
-            if(connector.getSourceName().equals(name)){
+            if(connector.getSourceType() == sourceType){
                 return connector;
             }
         }
         return null;
     }
 
+    /**
+     *
+     */
     public void saveSources(){
         for(Connector connector: sources){
-            if(connector.getSourceName().equals(GOOGLEFIT.getName())){
-                preferencesManager.setGoogleFitConnected(this, connector.isConnected());
-            }else if(connector.getSourceName().equals(FITBIT.getName())){
-                preferencesManager.setFitBitConnected(this, connector.isConnected());
-            }else if(connector.getSourceName().equals(IHEALTH.getName())){
-                preferencesManager.setIHealthConnected(this, connector.isConnected());
-            }
+            PreferencesManager.connectSource(this, connector.getSourceType(), connector.isConnected());
         }
     }
 
+    /**
+     *
+     */
     public void refreshSourceReadings(){
-        adapter.notifyDataSetChanged();
-        for(Connector connector: sources){
-            connector.loadHealthData();
-        }
+        loadSources();
+        updateSourceListWithNewData();
         adapter.notifyDataSetChanged();
         mainSwipeRefreshLayout.setRefreshing(false);
     }
 
+    /**
+     *
+     */
     @Override
     public void onRefresh() {
         refreshSourceReadings();
+    }
+
+    /**
+     *
+     * @param connector
+     */
+    private void updateSourceListItem(Connector connector){
+        for(int i = 0; i < sources.size(); i++){
+            if(sources.get(i).getSourceType() == connector.getSourceType()){
+                sources.remove(i);
+                sources.add(i, connector);
+            }
+        }
+        adapter.notifyDataSetChanged();
+        saveSources();
+    }
+
+    /**
+     *
+     */
+    private void updateSourceListWithNewData(){
+        for(int i = 0; i < sources.size(); i++){
+            Connector connector = sources.get(i);
+            //connector.loadHealthData();
+            sources.remove(i);
+            sources.add(i, connector);
+        }
+    }
+
+    /**
+     *
+     * @param view
+     */
+    public void createToolTip(View view){
+        Tooltip.make(this,
+                new Tooltip.Builder(101)
+                        .anchor(view, Tooltip.Gravity.TOP)
+                        .closePolicy(new Tooltip.ClosePolicy()
+                                .insidePolicy(true, false)
+                                .outsidePolicy(true, false), 3000)
+                        .activateDelay(800)
+                        .showDelay(300)
+                        .text(getString(R.string.adding_hint))
+                        .maxWidth(700)
+                        .withArrow(true)
+                        .withOverlay(true)
+                        .withStyleId(R.style.ToolTipLayoutCustomStyle)
+                        .floatingAnimation(Tooltip.AnimationBuilder.DEFAULT)
+                        .build()
+        ).show();
     }
 }

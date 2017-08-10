@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.fitbit.api.loaders.ResourceLoaderResult;
 import com.fitbit.api.models.DailyActivitySummary;
@@ -36,17 +37,27 @@ import static com.fitbit.authentication.Scope.activity;
 
 public class FitBitConnector extends Connector implements AuthenticationHandler {
 
+    /**
+     * FitBitConnector Constructor
+     * @param activity
+     * @param progressBarLayout
+     */
     public FitBitConnector(AppCompatActivity activity, RelativeLayout progressBarLayout) {
         super(SourceType.FITBIT, activity, progressBarLayout);
     }
 
-    @Override
     public void connect(){
-        setConnected(true);
         AuthenticationManager.configure(getActivity(), generateAuthenticationConfiguration(getActivity(), AddSourcesActivity.class));
         fitBitLogin();
+        setConnected(true);
     }
 
+    /**
+     *
+     * @param context
+     * @param addSourcesActivityClass
+     * @return
+     */
     public AuthenticationConfiguration generateAuthenticationConfiguration(Context context, Class<AddSourcesActivity> addSourcesActivityClass) {
 
         try {
@@ -81,6 +92,9 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
         }
     }
 
+    /**
+     *
+     */
     public void onFitBitLoggedIn() {
         Log.d(getTAG(), "LOGGED IN");
         getProgressBarLayout().setVisibility(View.GONE);
@@ -89,16 +103,27 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
         Intent intent = UserDataActivity.newIntent(getActivity());
         getActivity().startActivity(intent);*/
 
-        loadHealthData();
+        //loadHealthData();
     }
 
+    /**
+     *
+     */
     public void fitBitLogin() {
         /**
          *  3. Call login to show the login UI
          */
-        AuthenticationManager.login(getActivity());
+        if(AuthenticationManager.isLoggedIn()){
+            onFitBitLoggedIn();
+        }else{
+            AuthenticationManager.login(getActivity());
+        }
     }
 
+    /**
+     *
+     * @param authenticationResult
+     */
     public void onAuthFinished(AuthenticationResult authenticationResult) {
         getProgressBarLayout().setVisibility(View.GONE);
 
@@ -113,6 +138,10 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
         }
     }
 
+    /**
+     *
+     * @param authenticationResult
+     */
     private void displayAuthError(AuthenticationResult authenticationResult) {
         String message = "";
 
@@ -145,12 +174,16 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
 
     @Override
     public void disconnect(){
-        setConnected(false);
         AuthenticationManager.logout(getActivity());
+        setConnected(false);
         getProgressBarLayout().setVisibility(View.GONE);
     }
 
-    public void loadHealthData(){
+    /**
+     *
+     * @param textView
+     */
+    public void loadHealthData(final TextView textView){
         Loader<ResourceLoaderResult<DailyActivitySummary>> loaderResultLoader = ActivityService.getDailyActivitySummaryLoader(getActivity(), new Date());
         loaderResultLoader.registerListener(1234, new Loader.OnLoadCompleteListener<ResourceLoaderResult<DailyActivitySummary>>() {
             @Override
@@ -158,6 +191,7 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
                 if(dailyActivitySummaryResourceLoaderResult.isSuccessful()){
                     Log.d(getTAG(), "minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes());
                     setHealthData("sedentary minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes().toString());
+                    textView.setText("sedentary minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes().toString());
                     Log.d(getTAG(), "from test " + getHealthData());
                 }
             }

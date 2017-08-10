@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
@@ -55,6 +56,11 @@ public class GoogleFitConnector extends Connector{
 
     private static int id_count = 0;
 
+    /**
+     *
+     * @param activity
+     * @param progressBarLayout
+     */
     public GoogleFitConnector(AppCompatActivity activity, RelativeLayout progressBarLayout){
         super(SourceType.GOOGLEFIT, activity, progressBarLayout);
     }
@@ -65,6 +71,9 @@ public class GoogleFitConnector extends Connector{
         buildGoogleClient();
     }
 
+    /**
+     *
+     */
     public void buildGoogleClient(){
         if (mClient == null) {
             mClient = new GoogleApiClient.Builder(getActivity())
@@ -81,7 +90,7 @@ public class GoogleFitConnector extends Connector{
                             new GoogleApiClient.ConnectionCallbacks() {
                                 @Override
                                 public void onConnected(Bundle bundle) {
-                                    Log.i(getTAG(), "Connected!!!");
+                                    Log.i(TAG, "Connected!!!");
                                     // Now you can make calls to the Fitness APIs.
                                     findGooglefitDataSources();
                                     getProgressBarLayout().setVisibility(View.GONE);
@@ -92,10 +101,10 @@ public class GoogleFitConnector extends Connector{
                                     // If your connection to the sensor gets lost at some point,
                                     // you'll be able to determine the reason and react to it here.
                                     if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
-                                        Log.i(getTAG(), "Connection lost.  Cause: Network Lost.");
+                                        Log.i(TAG, "Connection lost.  Cause: Network Lost.");
                                     } else if (i
                                             == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
-                                        Log.i(getTAG(),
+                                        Log.i(TAG,
                                                 "Connection lost.  Reason: Service Disconnected");
                                     }
                                 }
@@ -104,7 +113,7 @@ public class GoogleFitConnector extends Connector{
                     .enableAutoManage(getActivity(), id_count, new GoogleApiClient.OnConnectionFailedListener() {
                         @Override
                         public void onConnectionFailed(ConnectionResult result) {
-                            Log.i(getTAG(), "Google Play services connection failed. Cause: " +
+                            Log.i(TAG, "Google Play services connection failed. Cause: " +
                                     result.toString());
                         }
                     })
@@ -114,6 +123,11 @@ public class GoogleFitConnector extends Connector{
 
     }
 
+    /**
+     *
+     * @param activity
+     * @return
+     */
     public static boolean checkGoogleFitPermissions(AppCompatActivity activity) {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && activity != null) {
             for (String permission : permissions) {
@@ -125,16 +139,26 @@ public class GoogleFitConnector extends Connector{
         return true;
     }
 
+    /**
+     *
+     * @param activity
+     */
     public static void requestGoogeFitPermisions(AppCompatActivity activity){
         activity.requestPermissions(permissions, PERMISSION_REQUEST_CODE);
     }
 
+    /**
+     *
+     */
     private void findGooglefitDataSources(){
         recordDataToHistory(DataType.TYPE_STEP_COUNT_DELTA);
-        loadHealthData();
+        //loadHealthData();
         listGoogleFitSubscriptions(DataType.TYPE_STEP_COUNT_DELTA);
     }
 
+    /**
+     *
+     */
     private void getLiveDataFromSensors(){
 
         Fitness.SensorsApi.findDataSources(mClient, new DataSourcesRequest.Builder()
@@ -146,15 +170,15 @@ public class GoogleFitConnector extends Connector{
                 .setResultCallback(new ResultCallback<DataSourcesResult>() {
                     @Override
                     public void onResult(DataSourcesResult dataSourcesResult) {
-                        Log.i(getTAG(), "Result: " + dataSourcesResult.getStatus().toString());
+                        Log.i(TAG, "Result: " + dataSourcesResult.getStatus().toString());
                         for (DataSource dataSource : dataSourcesResult.getDataSources()) {
-                            Log.i(getTAG(), "Data source found: " + dataSource.toString());
-                            Log.i(getTAG(), "Data Source type: " + dataSource.getDataType().getName());
+                            Log.i(TAG, "Data source found: " + dataSource.toString());
+                            Log.i(TAG, "Data Source type: " + dataSource.getDataType().getName());
 
                             //Let's register a listener to receive Activity data!
                             if (dataSource.getDataType().equals(DataType.TYPE_STEP_COUNT_CUMULATIVE)
                                     && mListener == null) {
-                                Log.i(getTAG(), "Data source for LOCATION_SAMPLE found!  Registering.");
+                                Log.i(TAG, "Data source for LOCATION_SAMPLE found!  Registering.");
                                 registerGoogleFitDataListener(dataSource,
                                         DataType.TYPE_STEP_COUNT_CUMULATIVE);
                             }
@@ -165,6 +189,11 @@ public class GoogleFitConnector extends Connector{
     }
 
 
+    /**
+     *
+     * @param dataSource
+     * @param dataType
+     */
     private void registerGoogleFitDataListener(DataSource dataSource, com.google.android.gms.fitness.data.DataType dataType){
 
         mListener = new OnDataPointListener() {
@@ -173,10 +202,10 @@ public class GoogleFitConnector extends Connector{
                 for (Field field : dataPoint.getDataType().getFields()) {
                     Value val = dataPoint.getValue(field);
 
-                    Log.d(getTAG(), "Value is: " + val.toString());
+                    Log.d(TAG, "Value is: " + val.toString());
 
-                    Log.i(getTAG(), "Detected DataPoint field: " + field.getName());
-                    Log.i(getTAG(), "Detected DataPoint value: " + val);
+                    Log.i(TAG, "Detected DataPoint field: " + field.getName());
+                    Log.i(TAG, "Detected DataPoint value: " + val);
                 }
             }
         };
@@ -193,14 +222,18 @@ public class GoogleFitConnector extends Connector{
                     @Override
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
-                            Log.i(getTAG(), "Listener registered!");
+                            Log.i(TAG, "Listener registered!");
                         } else {
-                            Log.i(getTAG(), "Listener not registered.");
+                            Log.i(TAG, "Listener not registered.");
                         }
                     }
                 });
     }
 
+    /**
+     *
+     * @param dataType
+     */
     public void recordDataToHistory(DataType dataType){
         Fitness.RecordingApi.subscribe(mClient, dataType)
                 .setResultCallback(new ResultCallback<Status>() {
@@ -209,89 +242,111 @@ public class GoogleFitConnector extends Connector{
                         if (status.isSuccess()) {
                             if (status.getStatusCode()
                                     == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
-                                Log.i(getTAG(), "Existing subscription for activity detected.");
+                                Log.i(TAG, "Existing subscription for activity detected.");
                             } else {
-                                Log.i(getTAG(), "Successfully subscribed!");
+                                Log.i(TAG, "Successfully subscribed!");
                             }
                         } else {
-                            Log.i(getTAG(), "There was a problem subscribing.");
+                            Log.i(TAG, "There was a problem subscribing.");
                         }
                     }
                 });
     }
 
-    public void loadHealthData(){
-        readDailyData(DataType.TYPE_STEP_COUNT_DELTA);
+    /**
+     *
+     * @param textView
+     */
+    public void loadHealthData(TextView textView){
+        readDailyData(DataType.TYPE_STEP_COUNT_DELTA, textView);
     }
 
-    public void readDailyData(DataType dataType){
+    /**
+     *
+     * @param dataType
+     * @param textView
+     */
+    public void readDailyData(DataType dataType, final TextView textView){
         PendingResult<DailyTotalResult> pendingResult = Fitness.HistoryApi.readDailyTotal(mClient, dataType);
-        Log.d(getTAG(), "AWAITING RESULT");
+        Log.d(TAG, "AWAITING RESULT");
         pendingResult.setResultCallback(new ResultCallback<DailyTotalResult>() {
             @Override
             public void onResult(@NonNull DailyTotalResult dailyTotalResult) {
                 if(dailyTotalResult.getStatus().isSuccess()){
-                    Log.d(getTAG(), "RESULT SUCCESSFUL");
+                    Log.d(TAG, "RESULT SUCCESSFUL");
                     DataSet totalSet = dailyTotalResult.getTotal();
                     /*long total = totalSet.isEmpty()
                             ? 0
                             : totalSet.getDataPoints().get(0).getValue(FIELD_STEPS).asInt();
-                    Log.d(getTAG(), "TOTAL STEPS: " + total);*/
-                    dumpDataSet(totalSet);
+                    Log.d(TAG, "TOTAL STEPS: " + total);*/
+                    dumpDataSet(totalSet, textView);
                 }
             }
         });
     }
 
-    private void dumpDataSet(DataSet dataSet) {
-        Log.i(getTAG(), "Data returned for Data type: " + dataSet.getDataType().getName());
-        Log.i(getTAG(), "amount: " + dataSet.getDataPoints().size());
+    /**
+     *
+     * @param dataSet
+     * @param textView
+     */
+    private void dumpDataSet(DataSet dataSet, TextView textView) {
+        Log.i(TAG, "Data returned for Data type: " + dataSet.getDataType().getName());
+        Log.i(TAG, "amount: " + dataSet.getDataPoints().size());
         DateFormat dateFormat = getTimeInstance();
 
         for (DataPoint dp : dataSet.getDataPoints()) {
-            Log.i(getTAG(), "Data point:");
-            Log.i(getTAG(), "\tType: " + dp.getDataType().getName());
-            Log.i(getTAG(), "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
-            Log.i(getTAG(), "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
+            Log.i(TAG, "Data point:");
+            Log.i(TAG, "\tType: " + dp.getDataType().getName());
+            Log.i(TAG, "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
+            Log.i(TAG, "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
             for(Field field : dp.getDataType().getFields()) {
-                Log.d(getTAG(), "\tField: " + field.getName() +
+                Log.d(TAG, "\tField: " + field.getName() +
                         " Value: " + dp.getValue(field));
                 this.setHealthData("steps = " + dp.getValue(field));
+                textView.setText("steps = " + dp.getValue(field));
             }
         }
     }
 
+    /**
+     *
+     * @param dataType
+     */
     public void listGoogleFitSubscriptions(DataType dataType){
-        Log.d(getTAG(), "LISTING SUBSCRIPTIONS");
+        Log.d(TAG, "LISTING SUBSCRIPTIONS");
         Fitness.RecordingApi.listSubscriptions(mClient, dataType)
                 // Create the callback to retrieve the list of subscriptions asynchronously.
                 .setResultCallback(new ResultCallback<ListSubscriptionsResult>() {
                     @Override
                     public void onResult(ListSubscriptionsResult listSubscriptionsResult) {
                         for (Subscription sc : listSubscriptionsResult.getSubscriptions()) {
-                            Log.d(getTAG(), "LISTING SUCCESSFUL");
+                            Log.d(TAG, "LISTING SUCCESSFUL");
                             DataType dt = sc.getDataType();
-                            Log.i(getTAG(), "Active subscription for data type: " + dt.getName());
+                            Log.i(TAG, "Active subscription for data type: " + dt.getName());
                         }
                     }
                 });
     }
 
+    /**
+     *
+     * @param dataType
+     */
     public void unsubscribeFromSubscriptions(final DataType dataType){
         Fitness.RecordingApi.unsubscribe(mClient, dataType)
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
-                            Log.i(getTAG(), "Successfully unsubscribed for data type: " + dataType.toString());
+                            Log.i(TAG, "Successfully unsubscribed for data type: " + dataType.toString());
                         } else {
                             // Subscription not removed
-                            Log.i(getTAG(), "Failed to unsubscribe for data type: " + dataType.toString());
+                            Log.i(TAG, "Failed to unsubscribe for data type: " + dataType.toString());
                         }
                     }
                 });
     }
-
 
     @Override
     public void disconnect(){
@@ -311,9 +366,9 @@ public class GoogleFitConnector extends Connector{
                     @Override
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
-                            Log.i(getTAG(), "Listener was removed!");
+                            Log.i(TAG, "Listener was removed!");
                         } else {
-                            Log.i(getTAG(), "Listener was not removed.");
+                            Log.i(TAG, "Listener was not removed.");
                         }
                     }
                 });

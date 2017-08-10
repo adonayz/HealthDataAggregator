@@ -1,11 +1,13 @@
 package edu.wpi.healthdataaggregator;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +32,12 @@ class SourceBaseAdapter extends BaseAdapter {
     private Connector currentSource;
     private Holder holder;
 
+    /**
+     *
+     * @param context
+     * @param results
+     * @param mode
+     */
     SourceBaseAdapter(Context context, LinkedList<Connector> results, int mode) {
         this.results = results;
         this.context = context;
@@ -38,21 +46,42 @@ class SourceBaseAdapter extends BaseAdapter {
 
     }
 
+    /**
+     *
+     * @return
+     */
     @Override
     public int getCount() {
         return results.size();
     }
 
+    /**
+     *
+     * @param position
+     * @return
+     */
     @Override
     public Connector getItem(int position) {
         return results.get(position);
     }
 
+    /**
+     *
+     * @param position
+     * @return
+     */
     @Override
     public long getItemId(int position) {
         return 0;
     }
 
+    /**
+     *
+     * @param position
+     * @param convertView
+     * @param parent
+     * @return
+     */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         currentSource = results.get(position);
@@ -78,19 +107,11 @@ class SourceBaseAdapter extends BaseAdapter {
 
         holder.sourceLogo = (ImageView) convertView.findViewById(R.id.source_logo);
 
-        if(currentSource.getSourceType() == SourceType.GOOGLEFIT){
+        Resources resources = context.getResources();
+        final int resourceId = resources.getIdentifier(currentSource.getSourceName().toLowerCase() + "_logo", "drawable",
+                context.getPackageName());
 
-            holder.sourceLogo.setImageResource(R.drawable.googlefit_logo);
-
-        }else if(currentSource.getSourceType() == SourceType.FITBIT){
-
-            holder.sourceLogo.setImageResource(R.drawable.fitbit_logo);
-
-        }else if(currentSource.getSourceType() == SourceType.IHEALTH){
-
-            holder.sourceLogo.setImageResource(R.drawable.ihealth_logo);
-
-        }
+        holder.sourceLogo.setImageResource(resourceId);
 
         holder.resultName = (TextView) convertView.findViewById(R.id.source_name);
 
@@ -103,16 +124,17 @@ class SourceBaseAdapter extends BaseAdapter {
 
         String description = "";
         if(mode == 1){
-            description = currentSource.getHealthData();
+            Log.d("ADAPTER", "Should print " + currentSource.getHealthData());
+            currentSource.loadHealthData(holder.resultDescription);
         }else{
             if(currentSource.isConnected()){
                 description = currentSource.getProfileInfo();
             }else{
                 description = currentSource.getMessage();
             }
-        }
 
-        holder.resultDescription.setText(description);
+            holder.resultDescription.setText(description);
+        }
 
         holder.cardView = (CardView) convertView.findViewById(R.id.card_view);
 
@@ -158,6 +180,9 @@ class SourceBaseAdapter extends BaseAdapter {
         return convertView;
     }
 
+    /**
+     *
+     */
     private class Holder extends RecyclerView.ViewHolder implements View.OnClickListener{
         ImageView sourceLogo;
         TextView resultName;
@@ -171,11 +196,20 @@ class SourceBaseAdapter extends BaseAdapter {
 
         int position;
 
+        /**
+         *
+         * @param view
+         * @param activity
+         */
         Holder(View view, Context activity){
             super(view);
             this.activity = activity;
         }
 
+        /**
+         *
+         * @param v
+         */
         @Override
         public void onClick(View v){
 
@@ -221,6 +255,11 @@ class SourceBaseAdapter extends BaseAdapter {
     }
 */
 
+    /**
+     *
+     * @param v
+     * @param greyscale
+     */
     // Code from http://blog.bradcampbell.nz/greyscale-views-on-android/
     public void setGreyscale(View v, boolean greyscale) {
         if (greyscale) {
@@ -235,11 +274,6 @@ class SourceBaseAdapter extends BaseAdapter {
             // Remove the hardware layer
             v.setLayerType(LAYER_TYPE_NONE, null);
         }
-    }
-
-    public void notifyDataSetChanged(int mode){
-        super.notifyDataSetChanged();
-        this.mode = mode;
     }
 
 }
