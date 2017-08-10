@@ -39,10 +39,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     private RelativeLayout progressBarRelativeLayout;
     private SwipeRefreshLayout mainSwipeRefreshLayout;
 
-    /**
-     *
-     * @param savedInstanceState
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         }
 
         if(sources.isEmpty()){
-            createToolTip(fab);
+            createToolTip(fab, Tooltip.Gravity.TOP, getString(R.string.adding_hint));
         }
     }
 
@@ -100,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Method that gets executed when user comes back to activity after pausing the current activity.
      */
     @Override
     public void onResume(){
@@ -109,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Method that gets executed when the user pauses an activity to temporarily visit another one.
      */
     @Override
     public void onPause(){
@@ -118,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Method that gets executed when the user exits an activity permanently
      */
     @Override
     public void onStop(){
@@ -127,9 +123,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
-     * @param menu
-     * @return
+     * This method is used to create the options/menu available on the toolbar
+     * @param menu is the menu that gets inflated over the toolbar
+     * @return true if menu is created successfully
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -139,8 +135,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
-     * @param item
+     * Used to specify what actions take place after a specific menu item is clicked by the user
+     * @param item option that the user has chosen to click
      * @return
      */
     @Override
@@ -152,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         int itemId = item.getItemId();
         switch (itemId) {
             case android.R.id.home:
-
+                //
                 isInSelectionMode = false;
                 adapter.notifyDataSetChanged();
                 toolbar.getMenu().clear();
@@ -163,16 +159,17 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
 
                 break;
             case R.id.action_settings:
-                return true;
+                return true; // stub
 
         }
+        // if none of the above were chosen, run the default version of the method
         return super.onOptionsItemSelected(item);
     }
 
     /**
-     *
-     * @param v
-     * @return
+     * Method that gets executed if the user clicks on an item in the application for a long time.
+     * @param v view/item on screen that has been long clickeds
+     * @return true if actions are executed succesfully
      */
     @Override
     public boolean onLongClick(View v) {
@@ -187,9 +184,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
-     * @param checkBox
-     * @param position
+     * This method is called from the SourceBaseAdapter class.
+     * It is used to figure out which cards have been selected by the user.
+     * It is also used to update the number of sources selected on the UI.
+     * @param checkBox is the checkbox associated with the current source/card
+     * @param position integer used to figure out which source/card has been chosen by the user
      */
     public void prepareSelection(CheckBox checkBox, int position){
 
@@ -205,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Method used to update the number of sources selected on the UI.
      * @param count
      */
     public void updateTitle(int count){
@@ -218,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Helper method that informs the application if the user has started to select sources that the user wants to aggregates.
      * @return
      */
     public static boolean isInSelectionMode() {
@@ -226,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Is called when FitBit authentication has completed successfully
      * @param result
      */
     @Override
@@ -236,7 +235,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Loads sources that have been connected to the application by the user.
+     * It uses data from SharedPreferences as reference.
      */
     public void loadSources(){
         sources.clear();
@@ -253,9 +253,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
-     * @param sourceType
-     * @return
+     * Used to get a Connector from the 'sources' LinkedList based on the sources type enumeration used as an input parameter.
+     * @param sourceType enumeration used to specify what type of Connector is needed.
+     * @return The specified source if it has been connected to the application. Returns null if source has not been connected or does not exist.
      */
     public static Connector getSource(SourceType sourceType){
         for(Connector connector: sources){
@@ -267,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Saves sources that have been connected to the application to shared preferences using their source type (enum).
      */
     public void saveSources(){
         for(Connector connector: sources){
@@ -276,17 +276,17 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Attempts to pull new data from sources and updates the UI accordingly to display results.
      */
     public void refreshSourceReadings(){
         loadSources();
-        updateSourceListWithNewData();
+        //updateSourceListWithNewData();
         adapter.notifyDataSetChanged();
         mainSwipeRefreshLayout.setRefreshing(false);
     }
 
     /**
-     *
+     * Method that gets executed when user drags SwipeRefreshLayout downwards.
      */
     @Override
     public void onRefresh() {
@@ -294,8 +294,8 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
-     * @param connector
+     * Removes the object that has the same subclass with the input from the sources LinkedList and replaces it with the input itself.
+     * @param connector the object that replaces the removed object from the sources LinkedList
      */
     private void updateSourceListItem(Connector connector){
         for(int i = 0; i < sources.size(); i++){
@@ -309,31 +309,34 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     /**
-     *
+     * Updates the 'sources' LinkedList after it loads new data onto its elements calling
+     * the loadHealthData() method on each of them.
      */
     private void updateSourceListWithNewData(){
-        for(int i = 0; i < sources.size(); i++){
+        /*for(int i = 0; i < sources.size(); i++){
             Connector connector = sources.get(i);
-            //connector.loadHealthData();
+            connector.loadHealthData();
             sources.remove(i);
             sources.add(i, connector);
-        }
+        }*/
     }
 
     /**
-     *
-     * @param view
+     * Creates tooltips on the screen to guide the user through the application.
+     * @param view View that the tooltip will be attached (pointing towards to).
+     * @param gravity Specifies the position the tooltip will be placed relative to the attached view.
+     * @param text The text that will be siplayed as a message on the tooltip.
      */
-    public void createToolTip(View view){
+    public void createToolTip(View view, Tooltip.Gravity gravity, String text){
         Tooltip.make(this,
                 new Tooltip.Builder(101)
-                        .anchor(view, Tooltip.Gravity.TOP)
+                        .anchor(view, gravity)
                         .closePolicy(new Tooltip.ClosePolicy()
                                 .insidePolicy(true, false)
                                 .outsidePolicy(true, false), 3000)
                         .activateDelay(800)
                         .showDelay(300)
-                        .text(getString(R.string.adding_hint))
+                        .text(text)
                         .maxWidth(700)
                         .withArrow(true)
                         .withOverlay(true)
