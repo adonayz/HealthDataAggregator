@@ -25,19 +25,19 @@ import it.sephiroth.android.library.tooltip.Tooltip;
 
 public class MainActivity extends AppCompatActivity implements View.OnLongClickListener, AuthenticationHandler, SwipeRefreshLayout.OnRefreshListener {
 
-    private static final int ADAPTER_MODE = 1;
+    private static final int ADAPTER_MODE = 1; // notifies adapter that it is generating cards for MainActivity. Not AddSourcesActivity.
 
-    private ListView dataSourceList;
-    private SourceBaseAdapter adapter;
-    private static boolean isInSelectionMode;
-    private ArrayList<Connector> selectedSources;
+    private ListView dataSourceList; // ListView that hold the cards
+    private SourceBaseAdapter adapter; // Adapter that generates cards with data
+    private static boolean isInSelectionMode; // Variable used to notify the application if the user has long clicked and is in selection mode.
+    private ArrayList<Connector> selectedSources; // The sources selected by the user after entering selection mode
     private Toolbar toolbar;
-    private TextView chooseTextView;
-    private int counter;
-    private static LinkedList<Connector> sources;
-    private WebView loginWebview;
-    private RelativeLayout progressBarRelativeLayout;
+    private TextView chooseTextView; // updates each time user selects sources
+    private int counter; // variable used to store number of sources selected.
+    private static LinkedList<Connector> sources; // Data sources the user has connected to the application.
+    private RelativeLayout progressBarRelativeLayout; // layout that holds the progress bar
     private SwipeRefreshLayout mainSwipeRefreshLayout;
+    private WebView loginWebview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -344,5 +344,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
                         .floatingAnimation(Tooltip.AnimationBuilder.DEFAULT)
                         .build()
         ).show();
+    }
+
+    public WebView getLoginWebview() {
+        return loginWebview;
     }
 }

@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 public class PreferencesManager {
     private static final String MY_PREFERENCES = "CONNECTED_SOURCES";
     private static final String IS_FIRST_TIME_PREFERENCE = "IS_FIRST_TIME";
+    private static final String WITHINGS_LOGIN_INFO = "WITHINGS_LOGIN_INFO";
 
     /**
      *
@@ -58,5 +59,17 @@ public class PreferencesManager {
         editor.putBoolean("is_first", false);
         editor.commit();
 
+    }
+
+    public static boolean setWithingsLoginInfo(Context context, String key, String value) {
+        SharedPreferences settings = context.getSharedPreferences(WITHINGS_LOGIN_INFO, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString(key, value);
+        return editor.commit();
+    }
+
+    public static String getWithingsLoginInfo(Context context, String key) {
+        SharedPreferences settings = context.getSharedPreferences(WITHINGS_LOGIN_INFO, Context.MODE_PRIVATE);
+        return settings.getString(key, null);
     }
 }

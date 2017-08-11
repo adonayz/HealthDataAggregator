@@ -22,13 +22,13 @@ import static edu.wpi.healthdataaggregator.SourceType.JAWBONE;
 
 public class AddSourcesActivity extends AppCompatActivity{
 
-    private static final int ADAPTER_MODE = 2;
+    private static final int ADAPTER_MODE = 2; // notifies adapter that it is generating cards for AddSourcesActivity. Not MainActivity.
 
-    private ListView dataSourceList;
-    private SourceBaseAdapter adapter;
-    private LinkedList<Connector> sources;
-    private static SourceType isConnectingSource = null;
-    private RelativeLayout addingProgressBarLayout;
+    private ListView dataSourceList; // list of all sources that are compatible with the application.
+    private SourceBaseAdapter adapter; // adapter that generates cards
+    private LinkedList<Connector> sources; //
+    private static SourceType isConnectingSource = null; // notifies application that is in the process of connecting a specific source.
+    private RelativeLayout addingProgressBarLayout; // layout containing progress bar
     private WebView loginWebview;
 
     /**
@@ -43,13 +43,14 @@ public class AddSourcesActivity extends AppCompatActivity{
         getSupportActionBar().setTitle(getString(R.string.add_sources_title));
 
         addingProgressBarLayout = (RelativeLayout) findViewById(R.id.addingProgressBarLayout);
-        loginWebview = (WebView) findViewById(R.id.invisibleWebView);
+        loginWebview = (WebView) findViewById(R.id.invisibleWebViewAdd);
 
         sources = new LinkedList<>();
         loadSources();
         saveSources();
 
         addingProgressBarLayout.setVisibility(View.GONE);
+        loginWebview.setVisibility(View.GONE);
 
         dataSourceList = (ListView) findViewById(R.id.add_source_list);
         adapter = new SourceBaseAdapter(AddSourcesActivity.this, sources, ADAPTER_MODE);
@@ -252,5 +253,9 @@ public class AddSourcesActivity extends AppCompatActivity{
         }
         adapter.notifyDataSetChanged();
         saveSources();
+    }
+
+    public WebView getLoginWebview() {
+        return loginWebview;
     }
 }
