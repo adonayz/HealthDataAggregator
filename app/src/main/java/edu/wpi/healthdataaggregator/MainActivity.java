@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     @Override
     public void onResume(){
         super.onResume();
-        refreshSourceReadings();
+        //refreshSourceReadings();
     }
 
     /**

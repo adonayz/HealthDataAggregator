@@ -17,7 +17,10 @@ import android.widget.TextView;
 
 import com.fitbit.api.loaders.ResourceLoaderResult;
 import com.fitbit.api.models.DailyActivitySummary;
+import com.fitbit.api.models.User;
+import com.fitbit.api.models.UserContainer;
 import com.fitbit.api.services.ActivityService;
+import com.fitbit.api.services.UserService;
 import com.fitbit.authentication.AuthenticationConfiguration;
 import com.fitbit.authentication.AuthenticationConfigurationBuilder;
 import com.fitbit.authentication.AuthenticationHandler;
@@ -50,6 +53,7 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
         AuthenticationManager.configure(getActivity(), generateAuthenticationConfiguration(getActivity(), AddSourcesActivity.class));
         fitBitLogin();
         setConnected(true);
+        setProfileInfo(PreferencesManager.getFitbitProfileInfo(getActivity()));
     }
 
     /**
@@ -99,6 +103,20 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
         Log.d(getTAG(), "LOGGED IN");
         getProgressBarLayout().setVisibility(View.GONE);
 
+        Loader<ResourceLoaderResult<UserContainer>> loaderResultLoader = UserService.getLoggedInUserLoader(getActivity());
+        loaderResultLoader.registerListener(1235, new Loader.OnLoadCompleteListener<ResourceLoaderResult<UserContainer>>() {
+            @Override
+            public void onLoadComplete(Loader<ResourceLoaderResult<UserContainer>> loader, ResourceLoaderResult<UserContainer> userContainerResourceLoaderResult) {
+                if(userContainerResourceLoaderResult.isSuccessful()){
+                    User user = userContainerResourceLoaderResult.getResult().getUser();
+                    String profileInfo = "Full Name: " + user.getFullName() + "\n" +
+                            "Age: " + user.getAge() + "\nGender: " + user.getGender() + "\nWeight: " +
+                            user.getWeight() + user.getWeightUnit();
+                    PreferencesManager.setFitbitProfileInfo(getActivity(), profileInfo);
+                }
+            }
+        });
+
         /*
         Intent intent = UserDataActivity.newIntent(getActivity());
         getActivity().startActivity(intent);*/
@@ -113,11 +131,12 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
         /**
          *  3. Call login to show the login UI
          */
-        if(AuthenticationManager.isLoggedIn()){
+        /*if(AuthenticationManager.isLoggedIn()){
             onFitBitLoggedIn();
         }else{
             AuthenticationManager.login(getActivity());
-        }
+        }*/
+        AuthenticationManager.login(getActivity());
     }
 
     /**
@@ -189,9 +208,19 @@ public class FitBitConnector extends Connector implements AuthenticationHandler 
             @Override
             public void onLoadComplete(Loader<ResourceLoaderResult<DailyActivitySummary>> loader, ResourceLoaderResult<DailyActivitySummary> dailyActivitySummaryResourceLoaderResult) {
                 if(dailyActivitySummaryResourceLoaderResult.isSuccessful()){
+                    String data = "";
                     Log.d(getTAG(), "minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes());
                     setHealthData("sedentary minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes().toString());
-                    textView.setText("sedentary minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes().toString());
+                    data += "Sedentary Minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSedentaryMinutes().toString() + "\n";
+                    data += "Steps = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getSteps().toString() + "\n";
+                    data += "Distance = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getDistances().get(0).getDistance() + "\n";
+                    data += "Floors = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getElevation() + "\n";
+                    data += "Lightly Active Minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getLightlyActiveMinutes() + "\n";
+                    data += "Fairly Active Minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getFairlyActiveMinutes() + "\n";
+                    data += "Heavily Active Minutes = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getVeryActiveMinutes() + "\n";
+                    data += "Activity Calories = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getActivityCalories().toString() + "\n";
+                    data += "Active Score = " + dailyActivitySummaryResourceLoaderResult.getResult().getSummary().getActiveScore().toString() + "\n";
+                    textView.setText(data);
                     Log.d(getTAG(), "from test " + getHealthData());
                 }
             }

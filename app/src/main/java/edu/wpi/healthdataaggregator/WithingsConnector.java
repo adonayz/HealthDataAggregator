@@ -9,11 +9,21 @@ import android.webkit.WebViewClient;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.DefaultApi10a;
 import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Adonay on 8/9/2017.
@@ -52,7 +62,21 @@ public class WithingsConnector extends Connector {
     }
 
     @Override
-    public void loadHealthData(TextView textView) {
+    public void loadHealthData(final TextView textView) {
+        Date currentDate = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        final String url = "https://api.health.nokia.com/v2/measure?action=getactivity" + "&userid=" + userid + "&date=" + dateFormat.format(currentDate) + "&oauth_token=" + token + "&oauth_token_secret=" + secret;
+
+        WithingsAsyncTask withingsAsyncTask = new WithingsAsyncTask();
+
+        withingsAsyncTask.setAsyncResponse(new WithingsAsyncResponse() {
+            @Override
+            public void onJsonRequestFinished(JSONObject result) {
+                textView.setText(result.toString());
+            }
+        });
+
+        withingsAsyncTask.execute(url);
 
     }
 
@@ -174,7 +198,6 @@ public class WithingsConnector extends Connector {
 
     };
 
-
     private void saveUserDatatoSharedPreferences(String token, String secret, String userid){
         PreferencesManager.setWithingsLoginInfo(getActivity(), "token", token);
         PreferencesManager.setWithingsLoginInfo(getActivity(), "secret", secret);
@@ -216,4 +239,60 @@ class WithingsApi extends DefaultApi10a {
     public static String getAUTHORIZATION_URL() {
         return AUTHORIZATION_URL;
     }
+}
+
+class WithingsAsyncTask extends AsyncTask<String, Void, JSONObject>{
+    private WithingsAsyncResponse withingsAsyncResponse;
+
+    @Override
+    protected JSONObject doInBackground(String... strings) {
+        JSONObject result = null;
+        try {
+            result = getJSONObjectFromURL(strings[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    @Override
+    protected void onPostExecute(JSONObject result){
+        withingsAsyncResponse.onJsonRequestFinished(result);
+    }
+
+    public static JSONObject getJSONObjectFromURL(String urlString) throws IOException, JSONException {
+        HttpURLConnection urlConnection = null;
+        URL url = new URL(urlString);
+        urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.setRequestMethod("GET");
+        urlConnection.setReadTimeout(10000 /* milliseconds */ );
+        urlConnection.setConnectTimeout(15000 /* milliseconds */ );
+        urlConnection.setDoOutput(true);
+        urlConnection.connect();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+        StringBuilder sb = new StringBuilder();
+
+        String line;
+        while ((line = br.readLine()) != null) {
+            sb.append(line + "\n");
+        }
+        br.close();
+
+        String jsonString = sb.toString();
+        System.out.println("JSON: " + jsonString);
+
+        return new JSONObject(jsonString);
+    }
+
+    public void setAsyncResponse(WithingsAsyncResponse withingsAsyncResponse){
+        this.withingsAsyncResponse = withingsAsyncResponse;
+    }
+}
+
+interface WithingsAsyncResponse{
+    void onJsonRequestFinished (JSONObject result);
 }

@@ -63,15 +63,15 @@ public enum SourceType {
     String getMessage(){
         switch(this){
             case GOOGLEFIT:
-                return "GoogleFit collects this this this";
+                return "GoogleFit collects ........";
             case FITBIT:
-                return "FitBit collects ur stuff";
+                return "FitBit.....";
             case IHEALTH:
-                return "iHealth make that and that that";
+                return "iHealth information......";
             case JAWBONE:
-                return "Jawbone is the shiiiiiii";
+                return "UP is the health platform for JawBone.....";
             case WITHINGS:
-                return "WITHINGS IS KUNINI";
+                return "WITHINGS is Nokia's health platform......";
             default:
                 return "This thing came from nowhere";
         }

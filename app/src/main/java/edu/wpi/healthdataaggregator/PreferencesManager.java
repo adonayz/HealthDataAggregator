@@ -11,6 +11,7 @@ public class PreferencesManager {
     private static final String MY_PREFERENCES = "CONNECTED_SOURCES";
     private static final String IS_FIRST_TIME_PREFERENCE = "IS_FIRST_TIME";
     private static final String WITHINGS_LOGIN_INFO = "WITHINGS_LOGIN_INFO";
+    private static final String FITBIT_PROFILE_INFO = "FITBIT_PROFILE_INFO";
 
     /**
      *
@@ -71,5 +72,17 @@ public class PreferencesManager {
     public static String getWithingsLoginInfo(Context context, String key) {
         SharedPreferences settings = context.getSharedPreferences(WITHINGS_LOGIN_INFO, Context.MODE_PRIVATE);
         return settings.getString(key, null);
+    }
+
+    public static boolean setFitbitProfileInfo(Context context, String value) {
+        SharedPreferences settings = context.getSharedPreferences(FITBIT_PROFILE_INFO, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("FitbitProfile", value);
+        return editor.commit();
+    }
+
+    public static String getFitbitProfileInfo(Context context) {
+        SharedPreferences settings = context.getSharedPreferences(FITBIT_PROFILE_INFO, Context.MODE_PRIVATE);
+        return settings.getString("FitbitProfile", null);
     }
 }

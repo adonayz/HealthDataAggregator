@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jawbone.upplatformsdk.api.ApiManager;
 import com.jawbone.upplatformsdk.api.response.OauthAccessTokenResponse;
@@ -35,6 +34,7 @@ public class JawboneConnector extends Connector {
     private static final String OAUTH_CALLBACK_URL = "up-platform://redirect";
     private List<UpPlatformSdkConstants.UpPlatformAuthScope> authScope;
     private static final int OAUTH_REQUEST_CODE = 25;
+    private TextView textView;
 
     /**
      *
@@ -65,6 +65,7 @@ public class JawboneConnector extends Connector {
 
     @Override
     public void loadHealthData(TextView textView) {
+        this.textView = textView;
         ApiManager.getRestApiInterface().getTrends(
                 UpPlatformSdkConstants.API_VERSION_STRING,
                 getTrendsRequestParams(),
@@ -157,13 +158,13 @@ public class JawboneConnector extends Connector {
         @Override
         public void success(Object o, Response response) {
             Log.e(TAG,  "api call successful, json output: " + o.toString());
-            Toast.makeText(getActivity(), o.toString(), Toast.LENGTH_LONG).show();
+            textView.setText(o.toString());
         }
 
         @Override
         public void failure(RetrofitError retrofitError) {
             Log.e(TAG,  "api call failed, error message: " + retrofitError.getMessage());
-            Toast.makeText(getActivity(), retrofitError.getMessage(), Toast.LENGTH_LONG).show();
+            textView.setText(retrofitError.getMessage());
         }
     };
 }
